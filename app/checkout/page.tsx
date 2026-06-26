@@ -1,51 +1,61 @@
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { MapPin, Plus, CreditCard, Truck, Loader2, Check } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Label } from '@/components/ui/label';
-import { Input } from '@/components/ui/input';
-import { Separator } from '@/components/ui/separator';
-import { Skeleton } from '@/components/ui/skeleton';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from '@/components/ui/dialog';
-import { useAppDispatch, useAppSelector } from '@/store/hooks';
-import { initializeAuth } from '@/store/slices/authSlice';
-import { initializeCart, clearCart } from '@/store/slices/cartSlice';
-import { initializeProducts } from '@/store/slices/productsSlice';
-import { initializeAddresses, addAddress } from '@/store/slices/addressesSlice';
-import { createOrder } from '@/store/slices/ordersSlice';
-import { getDiscountedPrice } from '@/data/mock-data';
-import { toast } from 'sonner';
-import { cn } from '@/lib/utils';
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Separator } from "@/components/ui/separator";
+import { Skeleton } from "@/components/ui/skeleton";
+import { getDiscountedPrice } from "@/data/mock-data";
+import { cn } from "@/lib/utils";
+import { useAppDispatch, useAppSelector } from "@/store/hooks";
+import { addAddress, initializeAddresses } from "@/store/slices/addressesSlice";
+import { initializeAuth } from "@/store/slices/authSlice";
+import { clearCart, initializeCart } from "@/store/slices/cartSlice";
+import { createOrder } from "@/store/slices/ordersSlice";
+import { initializeProducts } from "@/store/slices/productsSlice";
+import { Check, CreditCard, Loader2, MapPin, Plus, Truck } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { toast } from "sonner";
 
 export default function CheckoutPage() {
   const router = useRouter();
   const dispatch = useAppDispatch();
 
-  const { user, isAuthenticated, isLoading: authLoading } = useAppSelector((state) => state.auth);
-  const { items: cartItems, isLoading: cartLoading } = useAppSelector((state) => state.cart);
-  const { items: products, isLoading: productsLoading } = useAppSelector((state) => state.products);
-  const { items: addresses, isLoading: addressesLoading } = useAppSelector((state) => state.addresses);
+  const {
+    user,
+    isAuthenticated,
+    isLoading: authLoading,
+  } = useAppSelector((state) => state.auth);
+  const { items: cartItems, isLoading: cartLoading } = useAppSelector(
+    (state) => state.cart,
+  );
+  const { items: products, isLoading: productsLoading } = useAppSelector(
+    (state) => state.products,
+  );
+  const { items: addresses, isLoading: addressesLoading } = useAppSelector(
+    (state) => state.addresses,
+  );
 
-  const [selectedAddressId, setSelectedAddressId] = useState<string>('');
+  const [selectedAddressId, setSelectedAddressId] = useState<string>("");
   const [isPlacingOrder, setIsPlacingOrder] = useState(false);
   const [showAddressDialog, setShowAddressDialog] = useState(false);
   const [newAddress, setNewAddress] = useState({
-    name: '',
-    phone: '',
-    street: '',
-    city: '',
-    state: '',
-    zipCode: '',
+    name: "",
+    phone: "",
+    street: "",
+    city: "",
+    state: "",
+    zipCode: "",
   });
 
   useEffect(() => {
@@ -62,7 +72,7 @@ export default function CheckoutPage() {
 
   useEffect(() => {
     if (!authLoading && !isAuthenticated) {
-      router.push('/login?redirect=/checkout');
+      router.push("/login?redirect=/checkout");
     }
   }, [authLoading, isAuthenticated, router]);
 
@@ -74,7 +84,8 @@ export default function CheckoutPage() {
     }
   }, [addresses, selectedAddressId]);
 
-  const isLoading = authLoading || cartLoading || productsLoading || addressesLoading;
+  const isLoading =
+    authLoading || cartLoading || productsLoading || addressesLoading;
 
   // Get cart items with product details
   const cartWithProducts = cartItems
@@ -96,7 +107,7 @@ export default function CheckoutPage() {
 
   const subtotal = cartWithProducts.reduce(
     (sum, item) => sum + item.discountedPrice * item.quantity,
-    0
+    0,
   );
   const shipping = subtotal >= 50 ? 0 : 5.99;
   const total = subtotal + shipping;
@@ -104,9 +115,15 @@ export default function CheckoutPage() {
   const handleAddAddress = () => {
     if (!user?.id) return;
 
-    if (!newAddress.name || !newAddress.phone || !newAddress.street || 
-        !newAddress.city || !newAddress.state || !newAddress.zipCode) {
-      toast.error('Please fill in all address fields');
+    if (
+      !newAddress.name ||
+      !newAddress.phone ||
+      !newAddress.street ||
+      !newAddress.city ||
+      !newAddress.state ||
+      !newAddress.zipCode
+    ) {
+      toast.error("Please fill in all address fields");
       return;
     }
 
@@ -115,31 +132,31 @@ export default function CheckoutPage() {
         ...newAddress,
         userId: user.id,
         isDefault: addresses.length === 0,
-      })
+      }),
     );
-    
+
     setNewAddress({
-      name: '',
-      phone: '',
-      street: '',
-      city: '',
-      state: '',
-      zipCode: '',
+      name: "",
+      phone: "",
+      street: "",
+      city: "",
+      state: "",
+      zipCode: "",
     });
     setShowAddressDialog(false);
-    toast.success('Address added successfully');
+    toast.success("Address added successfully");
   };
 
   const handlePlaceOrder = async () => {
     if (!user?.id) return;
 
     if (!selectedAddressId) {
-      toast.error('Please select a delivery address');
+      toast.error("Please select a delivery address");
       return;
     }
 
     if (cartWithProducts.length === 0) {
-      toast.error('Your cart is empty');
+      toast.error("Your cart is empty");
       return;
     }
 
@@ -161,14 +178,14 @@ export default function CheckoutPage() {
         items: orderItems,
         addressId: selectedAddressId,
         totalAmount: total,
-        status: 'pending',
-        paymentMethod: 'cod',
-      })
+        status: "pending",
+        paymentMethod: "cod",
+      }),
     );
 
     dispatch(clearCart());
-    toast.success('Order placed successfully!');
-    router.push('/profile?tab=orders');
+    toast.success("Order placed successfully!");
+    router.push("/profile?tab=orders");
   };
 
   if (isLoading) {
@@ -196,9 +213,16 @@ export default function CheckoutPage() {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
-          <h1 className="text-2xl font-bold text-gray-900 mb-4">No items to checkout</h1>
-          <p className="text-gray-500 mb-6">Add items to your cart to proceed</p>
-          <Button onClick={() => router.push('/products')} className="bg-emerald-600 hover:bg-emerald-700">
+          <h1 className="text-2xl font-bold text-gray-900 mb-4">
+            No items to checkout
+          </h1>
+          <p className="text-gray-500 mb-6">
+            Add items to your cart to proceed
+          </p>
+          <Button
+            onClick={() => router.push("/products")}
+            className="bg-emerald-600 hover:bg-emerald-700"
+          >
             Browse Products
           </Button>
         </div>
@@ -220,7 +244,10 @@ export default function CheckoutPage() {
                   <MapPin className="h-5 w-5 text-emerald-600" />
                   Delivery Address
                 </CardTitle>
-                <Dialog open={showAddressDialog} onOpenChange={setShowAddressDialog}>
+                <Dialog
+                  open={showAddressDialog}
+                  onOpenChange={setShowAddressDialog}
+                >
                   <DialogTrigger asChild>
                     <Button variant="outline" size="sm">
                       <Plus className="h-4 w-4 mr-2" />
@@ -239,7 +266,10 @@ export default function CheckoutPage() {
                             id="name"
                             value={newAddress.name}
                             onChange={(e) =>
-                              setNewAddress({ ...newAddress, name: e.target.value })
+                              setNewAddress({
+                                ...newAddress,
+                                name: e.target.value,
+                              })
                             }
                             placeholder="John Doe"
                           />
@@ -250,7 +280,10 @@ export default function CheckoutPage() {
                             id="phone"
                             value={newAddress.phone}
                             onChange={(e) =>
-                              setNewAddress({ ...newAddress, phone: e.target.value })
+                              setNewAddress({
+                                ...newAddress,
+                                phone: e.target.value,
+                              })
                             }
                             placeholder="+1 234 567 8900"
                           />
@@ -262,7 +295,10 @@ export default function CheckoutPage() {
                           id="street"
                           value={newAddress.street}
                           onChange={(e) =>
-                            setNewAddress({ ...newAddress, street: e.target.value })
+                            setNewAddress({
+                              ...newAddress,
+                              street: e.target.value,
+                            })
                           }
                           placeholder="123 Main Street"
                         />
@@ -274,7 +310,10 @@ export default function CheckoutPage() {
                             id="city"
                             value={newAddress.city}
                             onChange={(e) =>
-                              setNewAddress({ ...newAddress, city: e.target.value })
+                              setNewAddress({
+                                ...newAddress,
+                                city: e.target.value,
+                              })
                             }
                             placeholder="New York"
                           />
@@ -285,7 +324,10 @@ export default function CheckoutPage() {
                             id="state"
                             value={newAddress.state}
                             onChange={(e) =>
-                              setNewAddress({ ...newAddress, state: e.target.value })
+                              setNewAddress({
+                                ...newAddress,
+                                state: e.target.value,
+                              })
                             }
                             placeholder="NY"
                           />
@@ -296,13 +338,19 @@ export default function CheckoutPage() {
                             id="zipCode"
                             value={newAddress.zipCode}
                             onChange={(e) =>
-                              setNewAddress({ ...newAddress, zipCode: e.target.value })
+                              setNewAddress({
+                                ...newAddress,
+                                zipCode: e.target.value,
+                              })
                             }
                             placeholder="10001"
                           />
                         </div>
                       </div>
-                      <Button onClick={handleAddAddress} className="w-full bg-emerald-600 hover:bg-emerald-700">
+                      <Button
+                        onClick={handleAddAddress}
+                        className="w-full bg-emerald-600 hover:bg-emerald-700"
+                      >
                         Add Address
                       </Button>
                     </div>
@@ -324,15 +372,22 @@ export default function CheckoutPage() {
                       <div
                         key={address.id}
                         className={cn(
-                          'flex items-start gap-3 p-4 rounded-lg border-2 cursor-pointer transition-colors',
+                          "flex items-start gap-3 p-4 rounded-lg border-2 cursor-pointer transition-colors",
                           selectedAddressId === address.id
-                            ? 'border-emerald-600 bg-emerald-50'
-                            : 'border-gray-200 hover:border-gray-300'
+                            ? "border-emerald-600 bg-emerald-50"
+                            : "border-gray-200 hover:border-gray-300",
                         )}
                         onClick={() => setSelectedAddressId(address.id)}
                       >
-                        <RadioGroupItem value={address.id} id={address.id} className="mt-1" />
-                        <label htmlFor={address.id} className="flex-1 cursor-pointer">
+                        <RadioGroupItem
+                          value={address.id}
+                          id={address.id}
+                          className="mt-1"
+                        />
+                        <label
+                          htmlFor={address.id}
+                          className="flex-1 cursor-pointer"
+                        >
                           <div className="flex items-center gap-2">
                             <span className="font-medium">{address.name}</span>
                             {address.isDefault && (
@@ -341,9 +396,12 @@ export default function CheckoutPage() {
                               </span>
                             )}
                           </div>
-                          <p className="text-sm text-gray-500 mt-1">{address.phone}</p>
+                          <p className="text-sm text-gray-500 mt-1">
+                            {address.phone}
+                          </p>
                           <p className="text-sm text-gray-600 mt-1">
-                            {address.street}, {address.city}, {address.state} {address.zipCode}
+                            {address.street}, {address.city}, {address.state}{" "}
+                            {address.zipCode}
                           </p>
                         </label>
                       </div>
@@ -368,7 +426,9 @@ export default function CheckoutPage() {
                   </div>
                   <div className="flex-1">
                     <p className="font-medium">Cash on Delivery</p>
-                    <p className="text-sm text-gray-500">Pay when you receive your order</p>
+                    <p className="text-sm text-gray-500">
+                      Pay when you receive your order
+                    </p>
                   </div>
                   <Check className="h-5 w-5 text-emerald-600" />
                 </div>
@@ -392,8 +452,12 @@ export default function CheckoutPage() {
                         />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <h4 className="font-medium text-gray-900 truncate">{item.product.name}</h4>
-                        <p className="text-sm text-gray-500">Qty: {item.quantity}</p>
+                        <h4 className="font-medium text-gray-900 truncate">
+                          {item.product.name}
+                        </h4>
+                        <p className="text-sm text-gray-500">
+                          Qty: {item.quantity}
+                        </p>
                       </div>
                       <div className="text-right">
                         <p className="font-medium">
@@ -411,7 +475,9 @@ export default function CheckoutPage() {
           <div className="lg:col-span-1">
             <Card className="sticky top-20">
               <CardContent className="p-6">
-                <h2 className="text-lg font-semibold text-gray-900 mb-4">Order Summary</h2>
+                <h2 className="text-lg font-semibold text-gray-900 mb-4">
+                  Order Summary
+                </h2>
 
                 <div className="space-y-3">
                   <div className="flex justify-between text-gray-600">
@@ -434,6 +500,7 @@ export default function CheckoutPage() {
                   <span>Total</span>
                   <span>₹{total.toFixed(2)}</span>
                 </div>
+                <div>
                   <div className="flex justify-between text-gray-600">
                     <span>Shipping</span>
                     {shipping === 0 ? (
@@ -462,7 +529,7 @@ export default function CheckoutPage() {
                       Processing...
                     </>
                   ) : (
-                    'Place Order'
+                    "Place Order"
                   )}
                 </Button>
 

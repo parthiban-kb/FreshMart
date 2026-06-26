@@ -1,58 +1,84 @@
-'use client';
+"use client";
 
-import { useEffect, useState, useMemo } from 'react';
-import Image from 'next/image';
-import {
-  Search,
-  Package,
-  Eye,
-  Truck,
-  CheckCircle,
-  Clock,
-  Box,
-  MapPin,
-  Calendar,
-  DollarSign,
-  User,
-  ShoppingBag,
-  Filter,
-} from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Skeleton } from '@/components/ui/skeleton';
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogFooter,
-  DialogDescription,
-} from '@/components/ui/dialog';
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
-import { Separator } from '@/components/ui/separator';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { useAppDispatch, useAppSelector } from '@/store/hooks';
-import { initializeOrders, changeOrderStatus } from '@/store/slices/ordersSlice';
-import { initializeProducts } from '@/store/slices/productsSlice';
-import { getAddresses, getUsers, getProductById } from '@/lib/storage';
-import { Order, Address, User as UserType, OrderStatus } from '@/types';
-import { getDiscountedPrice } from '@/data/mock-data';
-import { toast } from 'sonner';
-import { cn } from '@/lib/utils';
+} from "@/components/ui/select";
+import { Separator } from "@/components/ui/separator";
+import { Skeleton } from "@/components/ui/skeleton";
+import { getDiscountedPrice } from "@/data/mock-data";
+import { getAddresses, getProductById, getUsers } from "@/lib/storage";
+import { cn } from "@/lib/utils";
+import { useAppDispatch, useAppSelector } from "@/store/hooks";
+import {
+  updateOrderStatus as changeOrderStatus,
+  initializeOrders,
+} from "@/store/slices/ordersSlice";
+import { initializeProducts } from "@/store/slices/productsSlice";
+import { Address, Order, OrderStatus, User as UserType } from "@/types";
+import {
+  Box,
+  CheckCircle,
+  Clock,
+  DollarSign,
+  Eye,
+  MapPin,
+  Package,
+  Search,
+  ShoppingBag,
+  Truck,
+  User,
+} from "lucide-react";
+import Image from "next/image";
+import { useEffect, useMemo, useState } from "react";
+import { toast } from "sonner";
 
-const statusOptions: { value: OrderStatus; label: string; icon: React.ElementType; color: string }[] = [
-  { value: 'pending', label: 'Pending', icon: Clock, color: 'bg-amber-100 text-amber-700' },
-  { value: 'packed', label: 'Packed', icon: Box, color: 'bg-blue-100 text-blue-700' },
-  { value: 'shipped', label: 'Shipped', icon: Truck, color: 'bg-purple-100 text-purple-700' },
-  { value: 'delivered', label: 'Delivered', icon: CheckCircle, color: 'bg-emerald-100 text-emerald-700' },
+const statusOptions: {
+  value: OrderStatus;
+  label: string;
+  icon: React.ElementType;
+  color: string;
+}[] = [
+  {
+    value: "pending",
+    label: "Pending",
+    icon: Clock,
+    color: "bg-amber-100 text-amber-700",
+  },
+  {
+    value: "packed",
+    label: "Packed",
+    icon: Box,
+    color: "bg-blue-100 text-blue-700",
+  },
+  {
+    value: "shipped",
+    label: "Shipped",
+    icon: Truck,
+    color: "bg-purple-100 text-purple-700",
+  },
+  {
+    value: "delivered",
+    label: "Delivered",
+    icon: CheckCircle,
+    color: "bg-emerald-100 text-emerald-700",
+  },
 ];
 
 export default function AdminOrdersPage() {
@@ -60,12 +86,12 @@ export default function AdminOrdersPage() {
   const { items: orders, isLoading } = useAppSelector((state) => state.orders);
   const { items: products } = useAppSelector((state) => state.products);
 
-  const [searchQuery, setSearchQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState<'all' | OrderStatus>('all');
+  const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState<"all" | OrderStatus>("all");
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isStatusDialogOpen, setIsStatusDialogOpen] = useState(false);
-  const [newStatus, setNewStatus] = useState<OrderStatus>('pending');
+  const [newStatus, setNewStatus] = useState<OrderStatus>("pending");
 
   const [addresses, setAddresses] = useState<Address[]>([]);
   const [users, setUsers] = useState<UserType[]>([]);
@@ -80,38 +106,45 @@ export default function AdminOrdersPage() {
   const filteredOrders = useMemo(() => {
     return orders
       .filter((order) => {
-        const matchesSearch = order.id.toLowerCase().includes(searchQuery.toLowerCase());
-        const matchesStatus = statusFilter === 'all' || order.status === statusFilter;
+        const matchesSearch = order.id
+          .toLowerCase()
+          .includes(searchQuery.toLowerCase());
+        const matchesStatus =
+          statusFilter === "all" || order.status === statusFilter;
         return matchesSearch && matchesStatus;
       })
-      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+      .sort(
+        (a, b) =>
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+      );
   }, [orders, searchQuery, statusFilter]);
 
   const stats = useMemo(() => {
     return {
-      pending: orders.filter((o) => o.status === 'pending').length,
-      packed: orders.filter((o) => o.status === 'packed').length,
-      shipped: orders.filter((o) => o.status === 'shipped').length,
-      delivered: orders.filter((o) => o.status === 'delivered').length,
+      pending: orders.filter((o) => o.status === "pending").length,
+      packed: orders.filter((o) => o.status === "packed").length,
+      shipped: orders.filter((o) => o.status === "shipped").length,
+      delivered: orders.filter((o) => o.status === "delivered").length,
     };
   }, [orders]);
 
   const getUser = (userId: string) => users.find((u) => u.id === userId);
-  const getAddress = (addressId: string) => addresses.find((a) => a.id === addressId);
+  const getAddress = (addressId: string) =>
+    addresses.find((a) => a.id === addressId);
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
+    return new Date(dateString).toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
     });
   };
 
   const getStatusColor = (status: string) => {
     const option = statusOptions.find((o) => o.value === status);
-    return option?.color || 'bg-gray-100 text-gray-700';
+    return option?.color || "bg-gray-100 text-gray-700";
   };
 
   const handleViewOrder = (order: Order) => {
@@ -127,7 +160,9 @@ export default function AdminOrdersPage() {
 
   const handleUpdateStatus = () => {
     if (selectedOrder && newStatus !== selectedOrder.status) {
-      dispatch(changeOrderStatus({ orderId: selectedOrder.id, status: newStatus }));
+      dispatch(
+        changeOrderStatus({ orderId: selectedOrder.id, status: newStatus }),
+      );
       toast.success(`Order status updated to ${newStatus}`);
       setIsStatusDialogOpen(false);
     }
@@ -169,13 +204,22 @@ export default function AdminOrdersPage() {
             <Card
               key={status.value}
               className={cn(
-                'cursor-pointer transition-all hover:shadow-md',
-                statusFilter === status.value && 'ring-2 ring-emerald-500'
+                "cursor-pointer transition-all hover:shadow-md",
+                statusFilter === status.value && "ring-2 ring-emerald-500",
               )}
-              onClick={() => setStatusFilter(statusFilter === status.value ? 'all' : status.value)}
+              onClick={() =>
+                setStatusFilter(
+                  statusFilter === status.value ? "all" : status.value,
+                )
+              }
             >
               <CardContent className="p-4 flex items-center gap-4">
-                <div className={cn('h-10 w-10 rounded-full flex items-center justify-center', status.color)}>
+                <div
+                  className={cn(
+                    "h-10 w-10 rounded-full flex items-center justify-center",
+                    status.color,
+                  )}
+                >
                   <Icon className="h-5 w-5" />
                 </div>
                 <div>
@@ -201,7 +245,10 @@ export default function AdminOrdersPage() {
                 className="pl-10"
               />
             </div>
-            <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v as typeof statusFilter)}>
+            <Select
+              value={statusFilter}
+              onValueChange={(v) => setStatusFilter(v as typeof statusFilter)}
+            >
               <SelectTrigger className="w-full md:w-48">
                 <SelectValue placeholder="Filter by status" />
               </SelectTrigger>
@@ -226,11 +273,13 @@ export default function AdminOrdersPage() {
               <div className="h-16 w-16 rounded-full bg-gray-100 flex items-center justify-center mb-4">
                 <ShoppingBag className="h-8 w-8 text-gray-400" />
               </div>
-              <h3 className="text-lg font-medium text-gray-900 mb-1">No orders found</h3>
+              <h3 className="text-lg font-medium text-gray-900 mb-1">
+                No orders found
+              </h3>
               <p className="text-gray-500 text-sm">
-                {searchQuery || statusFilter !== 'all'
-                  ? 'Try adjusting your filters'
-                  : 'No orders have been placed yet'}
+                {searchQuery || statusFilter !== "all"
+                  ? "Try adjusting your filters"
+                  : "No orders have been placed yet"}
               </p>
             </div>
           ) : (
@@ -238,25 +287,46 @@ export default function AdminOrdersPage() {
               <table className="w-full">
                 <thead>
                   <tr className="border-b bg-gray-50">
-                    <th className="text-left py-4 px-6 font-medium text-gray-600">Order ID</th>
-                    <th className="text-left py-4 px-6 font-medium text-gray-600 hidden md:table-cell">Customer</th>
-                    <th className="text-left py-4 px-6 font-medium text-gray-600 hidden lg:table-cell">Date</th>
-                    <th className="text-left py-4 px-6 font-medium text-gray-600">Items</th>
-                    <th className="text-left py-4 px-6 font-medium text-gray-600">Total</th>
-                    <th className="text-left py-4 px-6 font-medium text-gray-600">Status</th>
-                    <th className="text-right py-4 px-6 font-medium text-gray-600">Actions</th>
+                    <th className="text-left py-4 px-6 font-medium text-gray-600">
+                      Order ID
+                    </th>
+                    <th className="text-left py-4 px-6 font-medium text-gray-600 hidden md:table-cell">
+                      Customer
+                    </th>
+                    <th className="text-left py-4 px-6 font-medium text-gray-600 hidden lg:table-cell">
+                      Date
+                    </th>
+                    <th className="text-left py-4 px-6 font-medium text-gray-600">
+                      Items
+                    </th>
+                    <th className="text-left py-4 px-6 font-medium text-gray-600">
+                      Total
+                    </th>
+                    <th className="text-left py-4 px-6 font-medium text-gray-600">
+                      Status
+                    </th>
+                    <th className="text-right py-4 px-6 font-medium text-gray-600">
+                      Actions
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
                   {filteredOrders.map((order) => {
                     const user = getUser(order.userId);
                     return (
-                      <tr key={order.id} className="border-b last:border-b-0 hover:bg-gray-50 transition-colors">
+                      <tr
+                        key={order.id}
+                        className="border-b last:border-b-0 hover:bg-gray-50 transition-colors"
+                      >
                         <td className="py-4 px-6">
-                          <p className="font-mono text-sm text-gray-900">{order.id}</p>
+                          <p className="font-mono text-sm text-gray-900">
+                            {order.id}
+                          </p>
                         </td>
                         <td className="py-4 px-6 hidden md:table-cell">
-                          <p className="text-gray-900 truncate max-w-[150px]">{user?.name || 'Unknown'}</p>
+                          <p className="text-gray-900 truncate max-w-[150px]">
+                            {user?.name || "Unknown"}
+                          </p>
                         </td>
                         <td className="py-4 px-6 hidden lg:table-cell text-gray-500 text-sm">
                           {formatDate(order.createdAt)}
@@ -265,14 +335,27 @@ export default function AdminOrdersPage() {
                           <Badge variant="outline">{order.items.length}</Badge>
                         </td>
                         <td className="py-4 px-6">
-                          <span className="font-semibold text-gray-900">${order.totalAmount.toFixed(2)}</span>
+                          <span className="font-semibold text-gray-900">
+                            ${order.totalAmount.toFixed(2)}
+                          </span>
                         </td>
                         <td className="py-4 px-6">
-                          <Badge className={cn('capitalize', getStatusColor(order.status))}>{order.status}</Badge>
+                          <Badge
+                            className={cn(
+                              "capitalize",
+                              getStatusColor(order.status),
+                            )}
+                          >
+                            {order.status}
+                          </Badge>
                         </td>
                         <td className="py-4 px-6">
                           <div className="flex items-center justify-end gap-2">
-                            <Button variant="ghost" size="sm" onClick={() => handleViewOrder(order)}>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleViewOrder(order)}
+                            >
                               <Eye className="h-4 w-4 mr-1" />
                               View
                             </Button>
@@ -308,10 +391,19 @@ export default function AdminOrdersPage() {
                 {/* Order Info */}
                 <div className="flex flex-wrap items-center justify-between gap-4">
                   <div>
-                    <p className="font-mono text-sm text-gray-500">{selectedOrder.id}</p>
-                    <p className="text-sm text-gray-500">{formatDate(selectedOrder.createdAt)}</p>
+                    <p className="font-mono text-sm text-gray-500">
+                      {selectedOrder.id}
+                    </p>
+                    <p className="text-sm text-gray-500">
+                      {formatDate(selectedOrder.createdAt)}
+                    </p>
                   </div>
-                  <Badge className={cn('capitalize text-sm px-3 py-1', getStatusColor(selectedOrder.status))}>
+                  <Badge
+                    className={cn(
+                      "capitalize text-sm px-3 py-1",
+                      getStatusColor(selectedOrder.status),
+                    )}
+                  >
                     {selectedOrder.status}
                   </Badge>
                 </div>
@@ -352,11 +444,15 @@ export default function AdminOrdersPage() {
                       <Card>
                         <CardContent className="p-4">
                           <p className="font-medium">{address.name}</p>
-                          <p className="text-sm text-gray-600">{address.street}</p>
+                          <p className="text-sm text-gray-600">
+                            {address.street}
+                          </p>
                           <p className="text-sm text-gray-600">
                             {address.city}, {address.state} {address.zipCode}
                           </p>
-                          <p className="text-sm text-gray-500 mt-1">{address.phone}</p>
+                          <p className="text-sm text-gray-500 mt-1">
+                            {address.phone}
+                          </p>
                         </CardContent>
                       </Card>
                     ) : (
@@ -376,9 +472,14 @@ export default function AdminOrdersPage() {
                       <div className="divide-y">
                         {selectedOrder.items.map((item, idx) => {
                           const product = getProductById(item.productId);
-                          const itemTotal = getDiscountedPrice(item.price, item.discount) * item.quantity;
+                          const itemTotal =
+                            getDiscountedPrice(item.price, item.discount) *
+                            item.quantity;
                           return (
-                            <div key={idx} className="flex items-center gap-4 p-4">
+                            <div
+                              key={idx}
+                              className="flex items-center gap-4 p-4"
+                            >
                               <div className="relative h-16 w-16 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0">
                                 {product?.image ? (
                                   <Image
@@ -395,13 +496,20 @@ export default function AdminOrdersPage() {
                               </div>
                               <div className="flex-1 min-w-0">
                                 <p className="font-medium text-gray-900 truncate">
-                                  {product?.name || 'Unknown Product'}
+                                  {product?.name || "Unknown Product"}
                                 </p>
                                 <p className="text-sm text-gray-500">
-                                  ${getDiscountedPrice(item.price, item.discount).toFixed(2)} x {item.quantity}
+                                  $
+                                  {getDiscountedPrice(
+                                    item.price,
+                                    item.discount,
+                                  ).toFixed(2)}{" "}
+                                  x {item.quantity}
                                 </p>
                               </div>
-                              <p className="font-semibold">${itemTotal.toFixed(2)}</p>
+                              <p className="font-semibold">
+                                ${itemTotal.toFixed(2)}
+                              </p>
                             </div>
                           );
                         })}
@@ -424,7 +532,9 @@ export default function AdminOrdersPage() {
                       </div>
                       <Separator />
                       <div className="flex items-center justify-between">
-                        <span className="font-semibold text-lg">Total Amount</span>
+                        <span className="font-semibold text-lg">
+                          Total Amount
+                        </span>
                         <span className="font-bold text-xl text-emerald-600">
                           ${selectedOrder.totalAmount.toFixed(2)}
                         </span>
@@ -472,13 +582,18 @@ export default function AdminOrdersPage() {
                     key={option.value}
                     onClick={() => setNewStatus(option.value)}
                     className={cn(
-                      'flex items-center gap-3 p-4 rounded-lg border-2 transition-all',
+                      "flex items-center gap-3 p-4 rounded-lg border-2 transition-all",
                       newStatus === option.value
-                        ? 'border-emerald-500 bg-emerald-50'
-                        : 'border-gray-200 hover:border-gray-300'
+                        ? "border-emerald-500 bg-emerald-50"
+                        : "border-gray-200 hover:border-gray-300",
                     )}
                   >
-                    <div className={cn('h-8 w-8 rounded-full flex items-center justify-center', option.color)}>
+                    <div
+                      className={cn(
+                        "h-8 w-8 rounded-full flex items-center justify-center",
+                        option.color,
+                      )}
+                    >
                       <Icon className="h-4 w-4" />
                     </div>
                     <span className="font-medium">{option.label}</span>
@@ -488,7 +603,10 @@ export default function AdminOrdersPage() {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsStatusDialogOpen(false)}>
+            <Button
+              variant="outline"
+              onClick={() => setIsStatusDialogOpen(false)}
+            >
               Cancel
             </Button>
             <Button
