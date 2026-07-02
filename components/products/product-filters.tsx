@@ -68,7 +68,7 @@ function FilterContent({ filters, onFiltersChange, maxPrice }: ProductFiltersPro
     filters.search !== '';
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 space-x-6">
       {/* Search */}
       <div className="space-y-2">
         <Label>Search</Label>
@@ -225,7 +225,7 @@ export function ProductFiltersComponent({ filters, onFiltersChange, maxPrice }: 
             <SheetHeader>
               <SheetTitle>Filters</SheetTitle>
             </SheetHeader>
-            <div className="mt-6 m-4">
+            <div className="mt-6">
               <FilterContent filters={filters} onFiltersChange={onFiltersChange} maxPrice={maxPrice} />
             </div>
           </SheetContent>
