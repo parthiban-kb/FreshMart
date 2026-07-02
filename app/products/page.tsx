@@ -166,11 +166,13 @@ function ProductsPageContent() {
 
         <div className="flex gap-8">
           {/* Sidebar Filters */}
+          <div className="hidden lg:visible">
           <ProductFiltersComponent
             filters={filters}
             onFiltersChange={setFilters}
             maxPrice={maxPrice}
           />
+          </div>
 
           {/* Products Grid */}
           <div className="flex-1">
