@@ -208,9 +208,7 @@ export function ProductFiltersComponent({ filters, onFiltersChange, maxPrice }: 
       <div className="hidden lg:block w-64 shrink-0">
         <div className="sticky top-20 bg-white rounded-lg border border-gray-200 p-6">
           <h2 className="font-semibold text-gray-900 mb-4">Filters</h2>
-          <div className="m-4">
             <FilterContent filters={filters} onFiltersChange={onFiltersChange} maxPrice={maxPrice} />
-          </div>
         </div>
       </div>
 
@@ -227,7 +225,7 @@ export function ProductFiltersComponent({ filters, onFiltersChange, maxPrice }: 
             <SheetHeader>
               <SheetTitle>Filters</SheetTitle>
             </SheetHeader>
-            <div className="mt-6">
+            <div className="mt-6 m-4">
               <FilterContent filters={filters} onFiltersChange={onFiltersChange} maxPrice={maxPrice} />
             </div>
           </SheetContent>
